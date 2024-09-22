@@ -43,7 +43,7 @@ async def basic_transcribe():
                 channels=1,
                 rate=44100,
                 input=True,
-                frames_per_buffer=1024,
+                frames_per_buffer=4096,
             )
             try:
                 while True:
