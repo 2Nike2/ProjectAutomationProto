@@ -1,0 +1,80 @@
+import asyncio
+import pyaudio
+from amazon_transcribe.client import TranscribeStreamingClient
+from amazon_transcribe.handlers import TranscriptResultStreamHandler
+from amazon_transcribe.model import TranscriptEvent
+from flask import Flask, render_template
+from flask_socketio import SocketIO, emit
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
+app.config["SECRET_KEY"] = "your_secret_key"
+socketio = SocketIO(app, async_mode=None)
+loop = asyncio.new_event_loop()
+
+class MyEventHandler(TranscriptResultStreamHandler):
+    """Handle the transcription event."""
+
+    async def handle_transcript_event(self, transcript_event: TranscriptEvent):
+        """Handle the transcription event."""
+        results = transcript_event.transcript.results
+        for result in results:
+            for alt in result.alternatives:
+                print(alt.transcript)
+                socketio.emit("transcript", {"text": alt.transcript})
+
+async def basic_transcribe(audio_queue):
+    """Start a stream transcription."""
+    try:
+        client = TranscribeStreamingClient(region="ap-northeast-1")
+        stream = await client.start_stream_transcription(
+            language_code="ja-JP",
+            media_sample_rate_hz=44100,
+            media_encoding="pcm",
+        )
+
+        async def send_audio_chunks():
+            while True:
+                data = await audio_queue.get()
+                print('data', data)
+                if data is None:  # Noneを受け取ったらストリームを終了
+                    await stream.input_stream.end_stream()
+                    break
+                await stream.input_stream.send_audio_event(audio_chunk=data)
+
+        handler = MyEventHandler(stream.output_stream)
+        await asyncio.gather(send_audio_chunks(), handler.handle_events())
+
+    except asyncio.CancelledError:
+        await stream.input_stream.end_stream()
+
+@app.route("/")
+def index():
+    """Return the index page."""
+    return render_template("index.html")
+
+@socketio.on("start_transcription")
+def handle_start_transcription_event(data):
+    """Start the transcription."""
+    print("Start transcription")
+    audio_queue = asyncio.Queue()
+    socketio.audio_queue = audio_queue
+
+    # asyncio のデフォルトループを使用
+    asyncio.run_coroutine_threadsafe(basic_transcribe(audio_queue), asyncio.get_event_loop())
+
+@socketio.on("audio_data")
+def handle_audio_data_event(data):
+    """Handle incoming audio data."""
+    print("Audio data received")
+    print(loop)
+    asyncio.run_coroutine_threadsafe(socketio.audio_queue.put(data), asyncio.get_event_loop())
+
+@socketio.on("stop_transcription")
+def handle_stop_transcription_event(data):
+    """Stop the transcription."""
+    print("Stop transcription")
+    if hasattr(socketio, 'audio_queue'):
+        asyncio.run_coroutine_threadsafe(socketio.audio_queue.put(None), asyncio.get_event_loop())
+    emit("transcript", {"text": "音声認識が停止されました。"})

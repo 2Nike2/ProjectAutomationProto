@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リアルタイム音声認識</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>リアルタイム音声認識</h1>
+    <div id="transcript"></div>
+    <button id="startBtn">スタート</button>
+    <button id="stopBtn">停止</button>
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+        var mediaRecorder;
+
+        socket.on('transcript', function(data) {
+            console.log(data.text);
+            var transcriptDiv = document.getElementById('transcript');
+            var newParagraph = document.createElement('p');
+            newParagraph.textContent = data.text;
+            transcriptDiv.appendChild(newParagraph);
+        });
+
+        document.getElementById('startBtn').addEventListener('click', function() {
+            console.log('start');
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = function(e) {
+                    var reader = new FileReader();
+                    reader.onload = function(event) {
+                        var arrayBuffer = event.target.result;
+                        socket.emit('audio_data', arrayBuffer);
+                    };
+                    reader.readAsArrayBuffer(e.data);
+                };
+                mediaRecorder.start(250); // 250msごとにデータを送信
+                socket.emit('start_transcription', {});
+            });
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', function() {
+            console.log('stop');
+            mediaRecorder.stop();
+            socket.emit('stop_transcription', {});
+        });
+    </script>
+</body>
+</html>
