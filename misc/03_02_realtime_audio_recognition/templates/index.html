@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>リアルタイム音声認識</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>リアルタイム音声認識</h1>
+    <div id="transcript"></div>
+    <button id="startBtn">スタート</button>
+    <button id="stopBtn">停止</button>
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('transcript', function(data) {
+            var transcriptDiv = document.getElementById('transcript');
+            var newParagraph = document.createElement('p');
+            newParagraph.textContent = data.text;
+            transcriptDiv.appendChild(newParagraph);
+        });
+
+        document.getElementById('startBtn').addEventListener('click', function() {
+            socket.emit('start_transcription', {});
+        });
+
+        document.getElementById('stopBtn').addEventListener('click', function() {
+            socket.emit('stop_transcription', {});
+        });
+    </script>
+</body>
+</html>
