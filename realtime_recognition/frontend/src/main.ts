@@ -2,42 +2,69 @@ const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
 
 let mediaRecorder: MediaRecorder;
-let audioChunks: Blob[] = [];
+let socket: WebSocket;
 
 if(startButton){
   startButton.onclick = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true} );
+
+    // // AudioContextでサンプルレートを確認
+    // const audioContext = new AudioContext();
+    // const sampleRate = audioContext.sampleRate;
+    // console.log('Sample rate:', sampleRate);
+
     mediaRecorder = new MediaRecorder(stream);
   
-    mediaRecorder.ondataavailable = (event) => {
-      audioChunks.push(event.data);
+    socket = new WebSocket('ws://127.0.0.1:8000/ws/audio-stream/');
+    socket.binaryType = 'arraybuffer';
+
+    socket.onopen = () => {
+      console.log('WebSocket connection established');
     }
 
-    mediaRecorder.onstop = () => {
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-      audioChunks = [];
+    socket.onmessage = (event) => {
 
-      const formData = new FormData();
-      formData.append('file', audioBlob, 'audio.webm');
+      console.log('Transcription result:', event.data);
 
-      fetch('/upload', {
-        method: 'POST',
-        body: formData,
-      })
-      .then((response) => response.json())
-      .then((data) => { console.log(data);});
+      const resultDiv = document.getElementById('result');
+      if(resultDiv){
+        resultDiv.innerHTML += event.data + '\n';
+      }
 
     };
 
-    mediaRecorder.start();
+    socket.onerror = (error) => {
+      console.log('WebSocket error:', error);
+    }
+
+    socket.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    mediaRecorder.ondataavailable = (event) => {
+      const audioChunk = event.data;
+      
+      socket.send(audioChunk);
+    }
+
+    mediaRecorder.start(500); // 500 milliseconds
 
   };
 } else {
   console.log('startButton element not found');
-}
+};
 
 if(stopButton){
   stopButton.onclick = () => {
-    mediaRecorder.stop();
+    if(mediaRecorder) {
+      mediaRecorder.stop();
+      console.log('MediaRecorder stopped');
+    };
+
+    if(socket && socket.readyState === WebSocket.OPEN){
+      socket.close();
+    }
   };
-}
+} else {
+  console.log('stopButton element not found');
+};
