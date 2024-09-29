@@ -1,7 +1,4 @@
-"""Check AWS Transcribe API REALTIME streaming transcription."""
-
 import asyncio
-
 import pyaudio
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.handlers import TranscriptResultStreamHandler
@@ -19,35 +16,58 @@ class MyEventHandler(TranscriptResultStreamHandler):
                 print(alt.transcript)
 
 
-async def basic_transcribe():
-    """Set up our client with your chosen Region."""
-    client = TranscribeStreamingClient(region="ap-northeast-1")
+class Transcriber:
+    """Handles audio streaming to AWS Transcribe."""
 
-    stream = await client.start_stream_transcription(
-        language_code="ja-JP",
-        media_sample_rate_hz=44100,
-        media_encoding="pcm",
-    )
+    def __init__(self, region: str, language_code: str, sample_rate: int = 44100):
+        self.client = TranscribeStreamingClient(region=region)
+        self.language_code = language_code
+        self.sample_rate = sample_rate
 
-    async def write_chunks():
-        """Write chunks to stream."""
+    async def start(self):
+        """Start transcription stream."""
+        # AWS Transcribe ストリームを開始
+        self.stream = await self.client.start_stream_transcription(
+            language_code=self.language_code,
+            media_sample_rate_hz=self.sample_rate,
+            media_encoding="pcm",
+        )
+
+        # ハンドラをセットアップ
+        handler = MyEventHandler(self.stream.output_stream)
+
+        # 音声データをストリーミングで送信
+        await asyncio.gather(self._write_chunks(), handler.handle_events())
+
+    async def _write_chunks(self):
+        """Write chunks to stream from microphone."""
         p = pyaudio.PyAudio()
+
+        # PyAudioストリームを開く
         stream_in = p.open(
             format=pyaudio.paInt16,
             channels=1,
-            rate=44100,
+            rate=self.sample_rate,
             input=True,
             frames_per_buffer=1024,
         )
 
-        while True:
-            data = stream_in.read(1024)
-            await stream.input_stream.send_audio_event(audio_chunk=data)
+        try:
+            # 音声データを取得してTranscribeに送信
+            while True:
+                data = stream_in.read(1024)
+                await self.stream.input_stream.send_audio_event(audio_chunk=data)
 
-    handler = MyEventHandler(stream.output_stream)
-    await asyncio.gather(write_chunks(), handler.handle_events())
+        finally:
+            # ストリームとPyAudioオブジェクトを閉じる
+            stream_in.close()
+            p.terminate()
 
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(basic_transcribe())
-loop.close()
+async def main():
+    transcriber = Transcriber(region="ap-northeast-1", language_code="ja-JP")
+    await transcriber.start()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
