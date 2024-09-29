@@ -1,13 +1,14 @@
 import os
 import shutil
 import asyncio
+import ffmpeg
+import io
 from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.model import TranscriptEvent
-
 
 app = FastAPI()
 
@@ -32,14 +33,16 @@ async def audio_stream(websocket: WebSocket):
   stream = await client.start_stream_transcription(
     language_code="ja-JP",
     media_sample_rate_hz=44100,
-    media_encoding="pcm"
+    media_encoding="pcm",
   )
 
   async def audio_generator():
     while True:
       try:
+
         data = await websocket.receive_bytes()
         await stream.input_stream.send_audio_event(audio_chunk=data)
+
       except WebSocketDisconnect:
         await stream.input_stream.end_stream()
         break
