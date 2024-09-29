@@ -167,3 +167,13 @@ cython_debug/
 
 # Mac
 .DS_Store
+
+# Node modules
+**/node_modules/**
+
+# Audio
+*.webm
+*.wav
+
+# backend static files
+realtime_recognition/backend/static/*
