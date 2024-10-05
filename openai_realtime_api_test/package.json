@@ -2,6 +2,7 @@
   "type": "module",
   "dependencies": {
     "@openai/realtime-api-beta": "github:openai/openai-realtime-api-beta",
+    "audio-decode": "^2.2.2",
     "dotenv": "^16.4.5",
     "speaker": "^0.5.5",
     "ws": "^8.18.0"
