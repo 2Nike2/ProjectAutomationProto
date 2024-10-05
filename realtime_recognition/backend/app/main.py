@@ -14,12 +14,6 @@ app = FastAPI()
 
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
-@app.post("/upload")
-async def upload_audio(file: UploadFile = File(...)):
-  with open(f"backend/app/audio/{file.filename}", "wb") as buffer:
-    shutil.copyfileobj(file.file, buffer)
-  return {"filename": file.filename}
-
 @app.get("/")
 async def serve_frontend():
   return FileResponse("backend/static/index.html")
@@ -37,11 +31,18 @@ async def audio_stream(websocket: WebSocket):
   )
 
   async def audio_generator():
+    buffer = bytearray()
+    batch_size = 32768
+
     while True:
       try:
-
         data = await websocket.receive_bytes()
-        await stream.input_stream.send_audio_event(audio_chunk=data)
+        buffer.extend(data)
+
+        if len(buffer) >= batch_size:
+          print('len(buffer):', len(buffer))
+          await stream.input_stream.send_audio_event(audio_chunk=buffer[:batch_size])
+          buffer = buffer[batch_size:]
 
       except WebSocketDisconnect:
         await stream.input_stream.end_stream()
@@ -49,16 +50,13 @@ async def audio_stream(websocket: WebSocket):
 
   async def process_transcription():
     async for event in stream.output_stream:
-      print("Received event from AWS Transcribe:", event)  # デバッグ用のログ
       if isinstance(event, TranscriptEvent):
-        print("ininstance passed") # デバッグ用のログ
-        print("event.transcript.results", event.transcript.results) # デバッグ用のログ
         results = event.transcript.results
         for result in results:
-          print("results loop passed") # デバッグ用のログ
+
           if not result.is_partial:
             transcript = result.alternatives[0].transcript
-            print("Sending transcript to WebSocket:", transcript)  # デバッグ用のログ
+            print(transcript)
             await websocket.send_text(transcript)
 
   try:

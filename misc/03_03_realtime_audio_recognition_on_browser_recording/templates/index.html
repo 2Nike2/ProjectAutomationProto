@@ -36,7 +36,7 @@
                     };
                     reader.readAsArrayBuffer(e.data);
                 };
-                mediaRecorder.start(250); // 250msごとにデータを送信
+                mediaRecorder.start(1000);
                 socket.emit('start_transcription', {});
             });
         });
