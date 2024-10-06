@@ -10,7 +10,7 @@ function playPcmData(pcmData) {
   const speaker = new Speaker({
     channels: 1,          // モノラル
     bitDepth: 16,         // 16ビット
-    sampleRate: 44100,    // サンプリングレート（例: 44100Hz）
+    sampleRate: 24000,    // サンプリングレート（例: 24000Hz）
   });
 
   // PCMデータをスピーカーに渡して再生
