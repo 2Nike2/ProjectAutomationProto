@@ -32,19 +32,19 @@ function base64EncodeAudio(float32Array) {
   return btoa(binary);
 }
 
-// Converts an Audio file into an conversation.item.create event
 async function audioToItemCreateEvent(audioFile) {
   const audioBuffer = await decodeAudio(audioFile);
   // Realtime API only acceps mono, get one channel only
   const channelData = audioBuffer.getChannelData(0);
   const base64AudioData = base64EncodeAudio(channelData);
   return {
-    type: 'conversation.item.create', 
+    type: 'input_audio_buffer.append', 
     item: {
       type: 'message',
       role: 'user',
 
       content: [{
+        event_id: 'question_test',
         type: 'input_audio', 
         audio: base64AudioData
       }]
@@ -62,28 +62,47 @@ const ws = new WebSocket(url, {
   }
 })
 
- ws.on("open", function open(){
+ws.on("open", function open(){
   console.log("Connected to server.");
 
-  const file = fs.readFileSync('test.mp3');
-  const event = audioToItemCreateEvent(file);
   ws.send(JSON.stringify({
     type: 'session.update',
     session: {
       instructions: "日本語の回答をお願いします。"
     }
-  }))
-  ws.send(JSON.stringify(event));
+  }));
   ws.send(JSON.stringify({type: 'response.create'}));
 
 });
 
+let is_question_sent =false;
+
 ws.on("message", function incoming(message){
   const result = JSON.parse(message.toString());
-  // itemを含んでいる場合に出力
-  if (result.item) {
-    if(result.item.status === "completed") {
-      console.log(result.item);
-    }
+
+  // // 全部出力
+  // console.log(result.type);
+  // console.log(result);
+  // console.log('*'.repeat(30));
+
+  if(result.type === 'error'){
+    console.log(result);
   }
+
+  if(result.type === "response.content_part.done" & !is_question_sent) { 
+    is_question_sent = true;
+    console.log('send question!');
+    const file = fs.readFileSync('question.mp3');
+    const event = audioToItemCreateEvent(file);
+    ws.send(JSON.stringify(event));
+    ws.send(JSON.stringify({type: 'input_audio_buffer.commit'}));
+    ws.send(JSON.stringify({type: 'response.create'}));
+  }
+
+  // itemを含んでいる場合に出力
+  // if (result.item) {
+  //   if(result.item.status === "completed") {
+  //     console.log(result.item);
+  //   }
+  // }
 });
