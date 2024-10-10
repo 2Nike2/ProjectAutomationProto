@@ -1,3 +1,13 @@
+function float32ToInt16(buffer: Float32Array): Int16Array {
+  const l = buffer.length;
+  const result = new Int16Array(l);
+  for (let i = 0; i < l; i++) {
+    // -1.0〜1.0の範囲のFloat32を16-bit PCMにスケールする
+    result[i] = buffer[i] * 0x7FFF;
+  }
+  return result;
+}
+
 const startButton = document.getElementById('start') as HTMLButtonElement;
 let ws: WebSocket | null = null;
 
@@ -23,7 +33,9 @@ startButton.addEventListener('click', () => {
       input.connect(audioProcessor);
       audioProcessor.port.onmessage = (event) => {
         if(ws && ws.readyState ===  WebSocket.OPEN) {
-          ws.send(event.data)
+          const audioData = event.data as Float32Array;
+          const int16Data = float32ToInt16(audioData);
+          ws.send(int16Data.buffer);
         }
       }
     });
