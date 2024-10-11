@@ -43,7 +43,7 @@ wss.on('connection', (ws) => {
   });
 
   let audioBuffer: number[] = []; // 音声データの一時的なバッファ
-  const BUFFER_SIZE_THRESHOLD = 128000; // 128,000サンプルを閾値に設定（例）
+  const BUFFER_SIZE_THRESHOLD = 32000; // 32,000サンプルを閾値に設定（例）
 
   ws.on('message', (message) => {
 
@@ -74,11 +74,14 @@ wss.on('connection', (ws) => {
   openai_ws.on("message", (message) => {
 
     const event = JSON.parse(message.toString())
-    // console.log(event["type"]);
+    console.log(event["type"]);
   
     // if(event['type'] === 'conversation.item.created'){
     //   console.log(event['item']['content'])
     // }
+    if(event['type'] === 'error'){
+      console.log(event)
+    }
     if(event["type"] === 'response.done' && event["response"]["status"] == 'completed'){
       console.log(event['response']['output'][0]['content'][0]['transcript'])
     }
