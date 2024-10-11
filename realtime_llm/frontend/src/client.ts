@@ -1,3 +1,18 @@
+async function resampleAudioBuffer(audioContext: AudioContext, audioData: Float32Array, targetSampleRate: number) {
+  const originalSampleRate = audioContext.sampleRate;
+  const audioBuffer = audioContext.createBuffer(1, audioData.length, originalSampleRate);
+  audioBuffer.getChannelData(0).set(audioData);
+
+  const offlineContext = new OfflineAudioContext(1, audioBuffer.duration * targetSampleRate, targetSampleRate);
+  const source = offlineContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(offlineContext.destination);
+  source.start(0);
+
+  const renderedBuffer = await offlineContext.startRendering();
+  return renderedBuffer.getChannelData(0);
+}
+
 function float32ToInt16(buffer: Float32Array): Int16Array {
   const l = buffer.length;
   const result = new Int16Array(l);
@@ -31,10 +46,14 @@ startButton.addEventListener('click', () => {
       const audioProcessor = new AudioWorkletNode(audioContext, 'audio-processor');
 
       input.connect(audioProcessor);
-      audioProcessor.port.onmessage = (event) => {
+      audioProcessor.port.onmessage = async (event) => {
         if(ws && ws.readyState ===  WebSocket.OPEN) {
           const audioData = event.data as Float32Array;
-          const int16Data = float32ToInt16(audioData);
+
+          // サンプリングレートを変換
+          const resampledData = await resampleAudioBuffer(audioContext, audioData, 24000);
+
+          const int16Data = float32ToInt16(resampledData);
           ws.send(int16Data.buffer);
         }
       }
