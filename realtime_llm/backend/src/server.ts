@@ -46,7 +46,7 @@ wss.on('connection', (ws) => {
   });
 
   let audioBuffer: number[] = []; // 音声データの一時的なバッファ
-  const BUFFER_SIZE_THRESHOLD = 32000; // 32,000サンプルを閾値に設定（例）
+  const BUFFER_SIZE_THRESHOLD = 16000; // 16,000サンプルを閾値に設定（例）
 
   ws.on('message', (message) => {
 
@@ -157,7 +157,9 @@ wss.on('connection', (ws) => {
     // }
 
     if(event["type"] === 'response.done' && event["response"]["status"] == 'completed'){
-      console.log(event['response']['output'][0]['content'][0]['transcript'])
+      const response_transcript = event['response']['output'][0]['content'][0]['transcript'] 
+      console.log(response_transcript)
+      ws.send(response_transcript);
     }
   
   });

@@ -26,6 +26,8 @@ function float32ToInt16(buffer: Float32Array): Int16Array {
 const startButton = document.getElementById('start') as HTMLButtonElement;
 let ws: WebSocket | null = null;
 
+const responseDiv = document.getElementById('response-div') as HTMLDivElement;
+
 startButton.addEventListener('click', () => {
   ws = new WebSocket('ws://localhost:3000');
 
@@ -34,7 +36,11 @@ startButton.addEventListener('click', () => {
   };
 
   ws.onmessage = (event) => {
-    console.log(`Received message from server ${event.data}`);
+    console.log(`Received message from server: ${event.data}`);
+    const message  = event.data;
+    const messageDiv = document.createElement('div');
+    messageDiv.textContent = message;
+    responseDiv.appendChild(messageDiv);
   };
 
   navigator.mediaDevices.getUserMedia({audio: true})
@@ -64,4 +70,10 @@ startButton.addEventListener('click', () => {
     console.error('Error accessing microphone', err);
   });
 
-})
+});
+
+const stopButton = document.getElementById('stop') as HTMLButtonElement;
+stopButton.addEventListener('click', () => {
+  console.log('WebSocket connection closed');
+  ws?.close();
+});
