@@ -23,6 +23,38 @@ function float32ToInt16(buffer: Float32Array): Int16Array {
   return result;
 }
 
+// KrokiサーバのAPIでPlantUMLコードをSVG画像に変換する。
+const imageDiv = document.getElementById('image-div') as HTMLDivElement;
+function convertPlantUMLToSVG(plantUMLCode: string) {
+
+  console.log('start convertPlantUMLToSVG');
+
+  fetch('http://localhost:8000/', {
+    method: 'POST',
+    body: JSON.stringify({
+      "diagram_source": plantUMLCode,
+      "diagram_type": "plantuml",
+      "output_format": "svg"
+    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then((response) => {
+    if (!response.ok) {
+      throw new Error('Failed to convert PlantUML to SVG');
+    }
+    console.log('success');
+    return response.text();
+
+  }).then((svgData) => {
+    console.log('svgData:', svgData);
+    const cleanedSvgData = svgData.replace(/<\?xml.*?\?>/, '');
+    console.log('cleanedSvgData:', cleanedSvgData);
+    imageDiv.innerHTML = svgData;
+  });
+}
+
 const startButton = document.getElementById('start') as HTMLButtonElement;
 let ws: WebSocket | null = null;
 
@@ -41,6 +73,7 @@ startButton.addEventListener('click', () => {
     const messageDiv = document.createElement('div');
     messageDiv.textContent = message;
     responseDiv.appendChild(messageDiv);
+    convertPlantUMLToSVG(message);
   };
 
   navigator.mediaDevices.getUserMedia({audio: true})

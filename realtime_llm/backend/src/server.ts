@@ -23,6 +23,20 @@ const wss = new WebSocketServer({ server });
 
 const openai_realtime_url = "wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01";
 
+// const instructions = `あなたはAWSインフラに精通したアーキテクトであり、PlantUMLのエキスパートです。
+// AWSのサービスを使ったインフラ構成図をPlantUMLの形式で作成してください。
+// 出力は必ずPlantUMLのコードのみで、最初の行は必ず「@startuml」、終わりの行は必ず「@enduml」として、
+// 他の説明文やコメントは含めないでください。
+// PlantUMLのコードはKroki APIに送信されるため、余計なテキストがあるとエラーになりますので注意してください。
+// `
+
+const instructions = `あなたはPlantUMLのエキスパートです。
+ユーザの要望に応じて適切な図を作成してください。
+出力は必ずPlantUMLのコードのみで、最初の行は必ず「@startuml」、終わりの行は必ず「@enduml」として、
+他の説明文やコメントは含めないでください。
+PlantUMLのコードはKroki APIに送信されるため、余計なテキストがあるとエラーになりますので注意してください。
+`
+
 wss.on('connection', (ws) => {
   console.log('Client connected');
 
@@ -37,7 +51,7 @@ wss.on('connection', (ws) => {
     openai_ws.send(JSON.stringify({
       type: "session.update",
       "session": {
-        "instructions": " 日本語でやりとりしてください。",
+        "instructions": instructions,
         "input_audio_transcription": { // この設定で入力音声の文字起こしの確認もしたいができない?また公式で記述のあった、enabled属性がない
           "model": "whisper-1"
         },
@@ -77,7 +91,7 @@ wss.on('connection', (ws) => {
   openai_ws.on("message", (message) => {
 
     const event = JSON.parse(message.toString())
-    console.log(event["type"]);
+    // console.log(event["type"]);
   
     // if(event['type'] === 'conversation.item.created'){
     //   console.log(event['item']['content'])
