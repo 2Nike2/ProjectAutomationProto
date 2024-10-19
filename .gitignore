@@ -178,3 +178,6 @@ cython_debug/
 
 # backend static files
 realtime_recognition/backend/static/*
+
+# Image
+*.svg
