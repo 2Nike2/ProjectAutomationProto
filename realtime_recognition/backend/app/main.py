@@ -1,8 +1,6 @@
-import os
-import shutil
 import asyncio
-import ffmpeg
-import io
+import boto3
+from botocore.exceptions import ClientError
 from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 from fastapi.responses import FileResponse
@@ -12,13 +10,19 @@ from amazon_transcribe.model import TranscriptEvent
 
 app = FastAPI()
 
+bedrock_model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
+bedrock_client = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
+
+# 会話履歴
+conversation_history = []
+
 @app.websocket("/ws/audio-stream/")
 async def audio_stream(websocket: WebSocket):
   await websocket.accept()
 
-  client = TranscribeStreamingClient(region="ap-northeast-1")
+  transcripbe_client = TranscribeStreamingClient(region="ap-northeast-1")
 
-  stream = await client.start_stream_transcription(
+  stream = await transcripbe_client.start_stream_transcription(
     language_code="ja-JP",
     media_sample_rate_hz=44100,
     media_encoding="pcm",
@@ -52,6 +56,44 @@ async def audio_stream(websocket: WebSocket):
             transcript = result.alternatives[0].transcript
             print(transcript)
             await websocket.send_text(transcript)
+            conversation_history.append(
+              {
+                "role": "user",
+                "content": [{"text": transcript}]
+              }
+            )
+
+            try:
+
+              response = bedrock_client.converse(
+                modelId=bedrock_model_id,
+                messages=conversation_history,
+                inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
+              )
+              response_text = response["output"]["message"]["content"][0]["text"]
+
+              conversation_history.append(
+                {
+                  "role": "assistant",
+                  "content": [{"text": response_text}]
+                }
+              )
+
+              await websocket.send_text(response_text)
+
+              # streaming_response = bedrock_client.converse_stream(
+              #   modelId=bedrock_model_id,
+              #   messages=conversation_history,
+              #   inferenceConfig={"maxTokens": 4096, "temperature": 0.5, "topP": 0.9}
+              # )
+
+              # for chunk in streaming_response["stream"]:
+              #   if "contentBlockDelta" in chunk:
+              #     text = chunk["contentBlockDelta"]["delta"]["text"]
+              #     print(text, end="")
+
+            except (ClientError, Exception) as e:
+              print(e)
 
   try:
     await asyncio.gather(audio_generator(), process_transcription())
