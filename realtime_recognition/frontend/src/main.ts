@@ -57,7 +57,9 @@ if(startButton){
   
         const resultDiv = document.getElementById('result');
         if(resultDiv){
-          resultDiv.innerHTML += event.data + '\n';
+          const messageDiv = document.createElement('div') as HTMLDivElement;
+          messageDiv.textContent = event.data;
+          resultDiv.appendChild(messageDiv);
         }
   
       };
