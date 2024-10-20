@@ -30,7 +30,7 @@ if(startButton){
       // const sampleRate = audioContext.sampleRate;
       // console.log('Sample rate:', sampleRate);
   
-      await audioContext.audioWorklet.addModule('/static/processor.js');
+      await audioContext.audioWorklet.addModule('/processor.js');
       console.log("AudioWorklet module loaded");
   
       // AudioWorkletNodeを作成

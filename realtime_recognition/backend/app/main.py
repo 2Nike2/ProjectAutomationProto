@@ -12,12 +12,6 @@ from amazon_transcribe.model import TranscriptEvent
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="backend/static"), name="static")
-
-@app.get("/")
-async def serve_frontend():
-  return FileResponse("backend/static/index.html")
-
 @app.websocket("/ws/audio-stream/")
 async def audio_stream(websocket: WebSocket):
   await websocket.accept()

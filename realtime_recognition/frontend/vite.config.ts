@@ -2,12 +2,12 @@ import { defineConfig } from 'vite';
 import { createHtmlPlugin } from 'vite-plugin-html';
 
 export default defineConfig({
-  base: '/static/',
+  base: '/',
   build: {
-      outDir: '../backend/static',
-      emptyOutDir: true,
+    outDir: 'dist', // これがフロントエンドのビルド先
+    emptyOutDir: true,
   },
   server: {
-      port: 3000
+    port: 3000 // フロントエンド用のポート。FastAPIとは別にする。
   }
 })
