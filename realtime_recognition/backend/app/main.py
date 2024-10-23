@@ -13,6 +13,9 @@ app = FastAPI()
 bedrock_model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
 bedrock_client = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
 
+# システムプロンプト
+system_prompt = '日本のサブカルのステレオタイプの中世の女騎士の役を演じてください。軽いお喋りチャットなので返答は十数語程度、また音声合成ソフトに文字列を渡すので感じを使わずひらがなカタカナのみで返して。'
+
 # 会話履歴
 conversation_history = []
 
@@ -67,8 +70,10 @@ async def audio_stream(websocket: WebSocket):
 
               response = bedrock_client.converse(
                 modelId=bedrock_model_id,
+                system=[{'text': system_prompt}],
                 messages=conversation_history,
-                inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
+                # inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
+                inferenceConfig={"maxTokens": 128, "temperature": 0.5, "topP": 0.9},
               )
               response_text = response["output"]["message"]["content"][0]["text"]
 
