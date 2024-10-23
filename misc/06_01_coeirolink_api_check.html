@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div>
+    <button id="play" onclick="playVoice()">再生</button>
+  </div>
+  <footer>
+    想定使用合成音声
+    COEIROINK:クロワちゃん 堕ちた女騎士B
+  </footer>
+  <script>
+
+    function playVoice() {
+
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then(() => {
+        const api_inputs = {
+          "speakerUuid": "cc1153b4-d20c-46dd-a308-73ca38c0e85a",
+          "styleId": 113,
+          "text": "こんにちは、よろしく",
+          "speedScale": 1.0,
+          "volumeScale": 1.0,
+          "prosodyDetail": [],
+          "pitchScale": 0.0,
+          "intonationScale": 1.0,
+          "prePhonemeLength": 0.1,
+          "postPhonemeLength": 0.5,
+          "outputSamplingRate": 24000,
+        };
+        fetch('http://127.0.0.1:50032/v1/synthesis', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(api_inputs)
+        }).then((response) => {
+          // wavファイルの再生
+          return response.blob();
+        }).then((blob) => {
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.play();
+        });
+
+      }).catch(error => {
+        console.error("Permission denied or not allowed", error);
+      });
+
+    }
+    
+  </script>
+</body>
+</html>
