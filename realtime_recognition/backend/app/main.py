@@ -58,14 +58,13 @@ async def audio_stream(websocket: WebSocket):
           if not result.is_partial:
             transcript = result.alternatives[0].transcript
             print(transcript)
-            await websocket.send_text(transcript)
-            conversation_history.append(
-              {
+            user_message = {
                 "role": "user",
                 "content": [{"text": transcript}]
               }
-            )
-
+            conversation_history.append(user_message)
+            await websocket.send_json(user_message)
+            
             try:
 
               response = bedrock_client.converse(
@@ -77,14 +76,12 @@ async def audio_stream(websocket: WebSocket):
               )
               response_text = response["output"]["message"]["content"][0]["text"]
 
-              conversation_history.append(
-                {
+              assistant_message = {
                   "role": "assistant",
                   "content": [{"text": response_text}]
                 }
-              )
-
-              await websocket.send_text(response_text)
+              conversation_history.append(assistant_message)
+              await websocket.send_json(assistant_message)
 
               # streaming_response = bedrock_client.converse_stream(
               #   modelId=bedrock_model_id,

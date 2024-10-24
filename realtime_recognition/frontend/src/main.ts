@@ -57,42 +57,59 @@ if(startButton){
   
         const resultDiv = document.getElementById('result');
         if(resultDiv){
+          const responseJson = JSON.parse(event.data);
+          const role = responseJson['role'];
+          const message = responseJson['content'][0]['text'];
           const messageDiv = document.createElement('div') as HTMLDivElement;
-          messageDiv.textContent = event.data;
+          messageDiv.textContent = message;
+          if(role == 'assistant'){
+            messageDiv.style.color = 'deeppink';
+            messageDiv.style.border = 'solid 1px deeppink';
+          } else {
+            messageDiv.style.color = 'forestgreen';
+            messageDiv.style.border = 'solid 1px forestgreen';
+          }
+          messageDiv.style.fontWeight = 'bold';
+          messageDiv.style.borderRadius = '5px';
+          messageDiv.style.padding = '5px';
+          messageDiv.style.margin = '5px';
+
           resultDiv.appendChild(messageDiv);
 
-          // 音声合成による音声再生
-          const requestBody = {
-            "speakerUuid": "cc1153b4-d20c-46dd-a308-73ca38c0e85a",
-            "styleId": 113,
-            "text": event.data,
-            "speedScale": 1.0,
-            "volumeScale": 1.0,
-            "prosodyDetail": [],
-            "pitchScale": 0.0,
-            "intonationScale": 1.0,
-            "prePhonemeLength": 0.1,
-            "postPhonemeLength": 0.5,
-            "outputSamplingRate": 24000,
-          };
+          if(role == 'assistant'){
+            // 音声合成による音声再生
+            const requestBody = {
+              "speakerUuid": "cc1153b4-d20c-46dd-a308-73ca38c0e85a",
+              "styleId": 113,
+              "text": message,
+              "speedScale": 1.0,
+              "volumeScale": 1.0,
+              "prosodyDetail": [],
+              "pitchScale": 0.0,
+              "intonationScale": 1.0,
+              "prePhonemeLength": 0.1,
+              "postPhonemeLength": 0.5,
+              "outputSamplingRate": 24000,
+            };
 
-          fetch('http://127.0.0.1:50032/v1/synthesis', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
-          }).then((response) => {
-            // wavファイルの再生
-            return response.blob();
-          }).then((blob) => {
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audio.muted = true;
-            audio.play().then(() => {
-              audio.muted = false;
+            fetch('http://127.0.0.1:50032/v1/synthesis', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(requestBody)
+            }).then((response) => {
+              // wavファイルの再生
+              return response.blob();
+            }).then((blob) => {
+              const url = URL.createObjectURL(blob);
+              const audio = new Audio(url);
+              audio.muted = true;
+              audio.play().then(() => {
+                audio.muted = false;
+              });
             });
-          });
+          }
 
         }
       };
