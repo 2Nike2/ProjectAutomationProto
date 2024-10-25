@@ -5,6 +5,15 @@ let audioContext: AudioContext;
 let socket: WebSocket;
 let workletNode: AudioWorkletNode;
 
+type VoiceDict = {
+  [key: string]: { speakerUuid: string; styleId: number };
+};
+const voiceDict: VoiceDict = {
+  crois_4: {speakerUuid: 'cc1153b4-d20c-46dd-a308-73ca38c0e85a', styleId: 113},
+  kanae_4: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 102},
+  kanae_5: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 104}  
+}
+
 if(startButton){
 
   startButton.onclick = async () => {
@@ -76,11 +85,16 @@ if(startButton){
 
           resultDiv.appendChild(messageDiv);
 
+          // 音声合成による音声再生
           if(role == 'assistant'){
-            // 音声合成による音声再生
+            
+            // ボイス種類の決定
+            const voiceSelect = document.getElementById('voice') as HTMLSelectElement; 
+            const voice = voiceSelect.value;            
+
             const requestBody = {
-              "speakerUuid": "cc1153b4-d20c-46dd-a308-73ca38c0e85a",
-              "styleId": 113,
+              "speakerUuid": voiceDict[voice]['speakerUuid'],
+              "styleId": voiceDict[voice]['styleId'],
               "text": message,
               "speedScale": 1.0,
               "volumeScale": 1.0,
