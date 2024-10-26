@@ -97,8 +97,7 @@ async def audio_stream(websocket: WebSocket):
                 modelId=bedrock_model_id,
                 system=[{'text': system_prompt}],
                 messages=conversation_history,
-                # inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
-                inferenceConfig={"maxTokens": 128, "temperature": 0.5, "topP": 0.9},
+                inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
               )
               response_text = response["output"]["message"]["content"][0]["text"]
 
