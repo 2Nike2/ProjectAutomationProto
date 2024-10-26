@@ -1,23 +1,49 @@
 import asyncio
 import boto3
 from botocore.exceptions import ClientError
-from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, File, UploadFile, WebSocket, WebSocketDisconnect, Form
 from fastapi.websockets import WebSocketState
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from amazon_transcribe.client import TranscribeStreamingClient
 from amazon_transcribe.model import TranscriptEvent
+from pydantic import BaseModel
 
 app = FastAPI()
+
+# CORSの設定を追加
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # 許可するオリジンを指定（* で全て許可も可）
+    allow_credentials=True,
+    allow_methods=["*"],  # 全てのHTTPメソッドを許可
+    allow_headers=["*"],  # 全てのヘッダーを許可
+)
 
 bedrock_model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
 bedrock_client = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
 
-# システムプロンプト
-system_prompt = '軽いお喋りチャットなので返答は十数語程度、また音声合成ソフトに文字列を渡すので感じを使わずひらがなカタカナのみで返してください。'
-
 # 会話履歴
 conversation_history = []
+
+
+# システムプロンプト
+system_prompt = '''\
+- 下記のような会話と関係ない言葉のみの入力については「NoResponseNeeded」という文字列を返してください。
+  -「あの」、「えーと」などのつなぎ言葉
+  -「うーん、」「おっと」、「しまった」などの独り言
+  -「はあ」、「ふぅ」などの息
+- 軽いお喋りチャットなので返答は十数語程度、また音声合成ソフトに文字列を渡すので感じを使わずひらがなカタカナのみで返してください。
+'''
+class PromptData(BaseModel):
+    system_prompt: str
+@app.post("/change-system-prompt/")
+def change_system_prompt(data: PromptData):
+  global system_prompt
+  system_prompt = data.system_prompt
+  print(system_prompt)
+  return {"message": "System prompt changed successfully"}
 
 @app.websocket("/ws/audio-stream/")
 async def audio_stream(websocket: WebSocket):

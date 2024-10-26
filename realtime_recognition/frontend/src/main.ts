@@ -1,5 +1,6 @@
 const startButton = document.getElementById('start');
 const stopButton = document.getElementById('stop');
+const changeSystemPromptButton = document.getElementById('changeSystemPromptButton');
 
 let audioContext: AudioContext;
 let socket: WebSocket;
@@ -9,9 +10,10 @@ type VoiceDict = {
   [key: string]: { speakerUuid: string; styleId: number };
 };
 const voiceDict: VoiceDict = {
-  crois_4: {speakerUuid: 'cc1153b4-d20c-46dd-a308-73ca38c0e85a', styleId: 113},
+  kanae_1: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 100},
   kanae_4: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 102},
-  kanae_5: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 104}  
+  kanae_5: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 104},
+  crois_4: {speakerUuid: 'cc1153b4-d20c-46dd-a308-73ca38c0e85a', styleId: 113},  
 }
 
 if(startButton){
@@ -86,7 +88,8 @@ if(startButton){
           resultDiv.appendChild(messageDiv);
 
           // 音声合成による音声再生
-          if(role == 'assistant'){
+          console.log(message);
+          if(role == 'assistant' && !message.includes('NoResponseNeeded')){
             
             // ボイス種類の決定
             const voiceSelect = document.getElementById('voice') as HTMLSelectElement; 
@@ -167,6 +170,23 @@ if (stopButton) {
   };
 } else {
   console.log('stopButton element not found');
+}
+
+if (changeSystemPromptButton) {
+  changeSystemPromptButton.onclick = () => {
+
+    const systemPrompt = document.getElementById('systemPrompt') as HTMLInputElement;
+
+    fetch('http://127.0.0.1:8000/change-system-prompt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({system_prompt: systemPrompt.value})
+    }).then((response) => {
+      console.log(response);
+    });
+  }
 }
 
 // Float32ArrayをPCMのInt16Arrayに変換する関数

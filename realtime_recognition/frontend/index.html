@@ -11,19 +11,26 @@
     <button id="start">Start Recording</button>
     <button id="stop">Stop Recording</button>
     <select id="voice">
-      <option value="crois_4">クロワちゃん 堕ちた女騎士B</option>
-      <option value="kanae_4">AI声優-金苗 喜び</option>
-      <option value="kanae_5">AI声優-金苗 ふわふわ</option>
+      <option value="kanae_1">COEIROINK: AI声優-金苗 のーまる</option>
+      <option value="kanae_4">COEIROINK: AI声優-金苗 喜び</option>
+      <option value="kanae_5">COEIROINK: AI声優-金苗 ふわふわ</option>
+      <option value="crois_4">COEIROINK: クロワちゃん 堕ちた女騎士B</option>
     </select>
+    <div>
+      <textarea id="systemPrompt" name="systemPrompt" style="width: 80vw;" rows="10">
+- 下記のような会話と関係ない言葉のみの入力については「NoResponseNeeded」という文字列を返してください。
+  -「あの」、「えーと」などのつなぎ言葉
+  -「うーん、」「おっと」、「しまった」などの独り言
+  -「はあ」、「ふぅ」などの息
+- 軽いお喋りチャットなので返答は十数語程度、また音声合成ソフトに文字列を渡すので感じを使わずひらがなカタカナのみで返してください。
+      </textarea>
+      <button id="changeSystemPromptButton">Change System Prompt</button>
+    </div>
+  
+    </div>
     <h2>Recognition Result:</h2>
     <div id="result">ここから下に会話履歴が表示されるよ</div>
 
-    <footer>
-      使用合成音声
-      COEIROINK:クロワちゃん 堕ちた女騎士B
-      COEIROINK:AI声優-金苗 喜び
-      COEIROINK:AI声優-金苗 ふわふわ
-    </footer>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
