@@ -13,6 +13,9 @@ const voiceDict: VoiceDict = {
   kanae_1: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 100},
   kanae_4: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 102},
   kanae_5: {speakerUuid: 'd41bcbd9-f4a9-4e10-b000-7a431568dd01', styleId: 104},
+  ririn_1: {speakerUuid: 'cb11bdbd-78fc-4f16-b528-a400bae1782d', styleId: 90},
+  ririn_2: {speakerUuid: 'cb11bdbd-78fc-4f16-b528-a400bae1782d', styleId: 91},
+  ririn_3: {speakerUuid: 'cb11bdbd-78fc-4f16-b528-a400bae1782d', styleId: 92},
   crois_4: {speakerUuid: 'cc1153b4-d20c-46dd-a308-73ca38c0e85a', styleId: 113},  
 }
 
