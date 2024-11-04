@@ -22,6 +22,7 @@ app.add_middleware(
 )
 
 bedrock_model_id = 'anthropic.claude-3-5-sonnet-20240620-v1:0'
+# bedrock_model_id = 'anthropic.claude-3-haiku-20240307-v1:0'
 bedrock_client = boto3.client("bedrock-runtime", region_name="ap-northeast-1")
 
 # 会話履歴
@@ -97,7 +98,7 @@ async def audio_stream(websocket: WebSocket):
                 modelId=bedrock_model_id,
                 system=[{'text': system_prompt}],
                 messages=conversation_history,
-                inferenceConfig={"maxTokens": 512, "temperature": 0.5, "topP": 0.9},
+                inferenceConfig={"maxTokens": 256, "temperature": 0.5, "topP": 0.9},
               )
               response_text = response["output"]["message"]["content"][0]["text"]
 
